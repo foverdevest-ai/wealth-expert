@@ -32,24 +32,15 @@ export function Sidebar() {
   return (
     <aside className="border-b border-white/10 bg-[#1a1a1a] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:w-28 lg:border-b-0">
       <div className="flex h-full flex-col items-center">
-        <div className="flex w-full justify-center px-3 py-4">
-          <div className="h-10 w-10 rounded-[14px] bg-[var(--accent)] p-2 shadow-[0_8px_18px_rgba(253,94,45,0.28)]">
-            <div className="h-full w-full rounded-full bg-white/95" />
-          </div>
-        </div>
-
-        <nav className="flex w-full gap-2 overflow-x-auto px-2 py-3 lg:flex-1 lg:flex-col lg:items-center lg:overflow-visible">
-          <NavGroup label="Overview" tone="orange" />
+        <nav className="flex w-full gap-2 overflow-x-auto px-2 py-4 lg:flex-1 lg:flex-col lg:items-center lg:overflow-visible">
           {navItems.slice(0, 2).map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} />
           ))}
-          <Divider />
-          <NavGroup label="Analytics" tone="blue" />
+          <Divider tone="orange" />
           {navItems.slice(2, 6).map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} />
           ))}
-          <Divider />
-          <NavGroup label="Setup" tone="muted" />
+          <Divider tone="blue" />
           {navItems.slice(6).map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} />
           ))}
@@ -67,21 +58,12 @@ export function Sidebar() {
   );
 }
 
-function NavGroup({ label, tone }: { label: string; tone: "orange" | "blue" | "muted" }) {
+function Divider({ tone }: { tone: "orange" | "blue" }) {
   return (
-    <div className="mt-2 hidden w-full px-1 text-center lg:block">
-      <div
-        className={`mx-auto h-1 w-8 rounded-full ${
-          tone === "orange" ? "bg-[var(--accent)]" : tone === "blue" ? "bg-[#2d4d85]" : "bg-white/20"
-        }`}
-      />
-      <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em] text-white/40">{label}</div>
+    <div className="my-2 hidden w-14 items-center justify-center lg:flex">
+      <div className={`h-1 w-9 rounded-full ${tone === "orange" ? "bg-[var(--accent)]" : "bg-[#2d4d85]"}`} />
     </div>
   );
-}
-
-function Divider() {
-  return <div className="my-1 hidden h-px w-14 bg-white/10 lg:block" />;
 }
 
 function NavLink({
