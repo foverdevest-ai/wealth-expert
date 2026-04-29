@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EntityType {
+  PRIVATE
+  HOLDING_BV
+  OPERATING_BV
+  UK_LTD
+  OTHER
+}
+
+enum AccountSourceType {
+  ABN_AMRO
+  BITVAVO
+  REVOLUT
+  DEGIRO
+  MANUAL
+}
+
+enum AccountClass {
+  BANK
+  CRYPTO
+  BROKER
+  PROPERTY
+  LIABILITY
+  MANUAL
+}
+
+enum LiquidityClass {
+  LIQUID
+  ILLIQUID
+  MIXED
+}
+
+enum TransactionDirection {
+  INFLOW
+  OUTFLOW
+}
+
+enum SyncStatus {
+  HEALTHY
+  STALE
+  ERROR
+  MANUAL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entities       Entity[]
+  categories     TransactionCategory[]
+  tags           TransactionTag[]
+  transactionRules TransactionRule[]
+  institutions   ConnectedInstitution[]
+}
+
+model Entity {
+  id        String     @id @default(cuid())
+  userId    String
+  name      String
+  type      EntityType
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user         User @relation(fields: [userId], references: [id])
+  accounts     ConnectedAccount[]
+  transactions Transaction[]
+  assets       Asset[]
+  liabilities  Liability[]
+}
+
+model ConnectedInstitution {
+  id           String            @id @default(cuid())
+  userId       String
+  provider     AccountSourceType
+  displayName  String
+  status       String
+  externalId   String?
+  lastSyncAt   DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  user     User @relation(fields: [userId], references: [id])
+  accounts ConnectedAccount[]
+  syncJobs SyncJob[]
+}
+
+model ConnectedAccount {
+  id                    String            @id @default(cuid())
+  institutionId          String?
+  entityId               String
+  externalAccountId      String?
+  name                  String
+  source                AccountSourceType
+  accountClass          AccountClass
+  liquidity             LiquidityClass
+  currency              String            @default("EUR")
+  includeInConsolidated Boolean           @default(true)
+  currentBalance        Decimal           @db.Decimal(18, 2)
+  syncStatus            SyncStatus        @default(HEALTHY)
+  lastSyncedAt          DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  institution ConnectedInstitution? @relation(fields: [institutionId], references: [id])
+  entity      Entity                @relation(fields: [entityId], references: [id])
+  balances    AccountBalanceSnapshot[]
+  transactions Transaction[]
+  investmentAccount InvestmentAccount?
+  assets      Asset[]
+}
+
+model AccountBalanceSnapshot {
+  id        String   @id @default(cuid())
+  accountId String
+  capturedAt DateTime
+  balance   Decimal  @db.Decimal(18, 2)
+  currency  String   @default("EUR")
+
+  account ConnectedAccount @relation(fields: [accountId], references: [id])
+}
+
+model Transaction {
+  id                  String               @id @default(cuid())
+  accountId           String
+  entityId            String
+  categoryId          String
+  externalTransactionId String?
+  date                DateTime
+  description         String
+  counterparty        String?
+  amount              Decimal              @db.Decimal(18, 2)
+  currency            String               @default("EUR")
+  direction           TransactionDirection
+  isInternalTransfer  Boolean              @default(false)
+  isInvestmentRelated Boolean              @default(false)
+  liquidityImpact     LiquidityClass
+  notes               String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  account  ConnectedAccount    @relation(fields: [accountId], references: [id])
+  entity   Entity              @relation(fields: [entityId], references: [id])
+  category TransactionCategory @relation(fields: [categoryId], references: [id])
+  tags     TransactionTagOnTransaction[]
+}
+
+model TransactionCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  parentId  String?
+  name      String
+  color     String
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User @relation(fields: [userId], references: [id])
+  parent       TransactionCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children     TransactionCategory[] @relation("CategoryTree")
+  transactions Transaction[]
+  rules        TransactionRule[]
+}
+
+model TransactionTag {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  createdAt DateTime @default(now())
+
+  user         User @relation(fields: [userId], references: [id])
+  transactions TransactionTagOnTransaction[]
+
+  @@unique([userId, name])
+}
+
+model TransactionTagOnTransaction {
+  transactionId String
+  tagId         String
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  tag         TransactionTag @relation(fields: [tagId], references: [id])
+
+  @@id([transactionId, tagId])
+}
+
+model TransactionRule {
+  id              String   @id @default(cuid())
+  userId          String
+  categoryId      String
+  name            String
+  descriptionMatch String?
+  counterpartyMatch String?
+  amountMin       Decimal? @db.Decimal(18, 2)
+  amountMax       Decimal? @db.Decimal(18, 2)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User @relation(fields: [userId], references: [id])
+  category TransactionCategory @relation(fields: [categoryId], references: [id])
+}
+
+model Asset {
+  id        String          @id @default(cuid())
+  entityId  String
+  accountId String?
+  name      String
+  assetClass AccountClass
+  liquidity LiquidityClass
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  entity   Entity @relation(fields: [entityId], references: [id])
+  account  ConnectedAccount? @relation(fields: [accountId], references: [id])
+  snapshots AssetSnapshot[]
+  property Property?
+}
+
+model AssetSnapshot {
+  id        String   @id @default(cuid())
+  assetId   String
+  month     DateTime
+  value     Decimal  @db.Decimal(18, 2)
+  source    String
+  createdAt DateTime @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id])
+}
+
+model Liability {
+  id        String         @id @default(cuid())
+  entityId  String
+  name      String
+  liabilityClass AccountClass
+  liquidity LiquidityClass
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  entity    Entity @relation(fields: [entityId], references: [id])
+  snapshots LiabilitySnapshot[]
+}
+
+model LiabilitySnapshot {
+  id          String   @id @default(cuid())
+  liabilityId String
+  month       DateTime
+  value       Decimal  @db.Decimal(18, 2)
+  source      String
+  createdAt   DateTime @default(now())
+
+  liability Liability @relation(fields: [liabilityId], references: [id])
+}
+
+model Property {
+  id        String   @id @default(cuid())
+  assetId   String   @unique
+  address   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  asset      Asset @relation(fields: [assetId], references: [id])
+  valuations PropertyValuation[]
+}
+
+model PropertyValuation {
+  id         String   @id @default(cuid())
+  propertyId String
+  valuedAt   DateTime
+  value      Decimal  @db.Decimal(18, 2)
+  source     String
+  notes      String?
+
+  property Property @relation(fields: [propertyId], references: [id])
+}
+
+model InvestmentAccount {
+  id        String   @id @default(cuid())
+  accountId String   @unique
+  provider  AccountSourceType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  account   ConnectedAccount @relation(fields: [accountId], references: [id])
+  positions InvestmentPosition[]
+  snapshots InvestmentSnapshot[]
+}
+
+model InvestmentPosition {
+  id                  String   @id @default(cuid())
+  investmentAccountId String
+  symbol              String
+  assetType           String
+  quantity            Decimal  @db.Decimal(24, 8)
+  averageCost         Decimal? @db.Decimal(18, 4)
+  currentPrice        Decimal? @db.Decimal(18, 4)
+  currentValue        Decimal  @db.Decimal(18, 2)
+  capturedAt          DateTime
+
+  investmentAccount InvestmentAccount @relation(fields: [investmentAccountId], references: [id])
+}
+
+model InvestmentSnapshot {
+  id                  String   @id @default(cuid())
+  investmentAccountId String
+  month               DateTime
+  contributed         Decimal  @db.Decimal(18, 2)
+  currentValue        Decimal  @db.Decimal(18, 2)
+  realizedGainLoss    Decimal  @db.Decimal(18, 2)
+  unrealizedGainLoss  Decimal  @db.Decimal(18, 2)
+
+  investmentAccount InvestmentAccount @relation(fields: [investmentAccountId], references: [id])
+}
+
+model NetWorthSnapshot {
+  id               String   @id @default(cuid())
+  userId           String
+  month            DateTime
+  assetsTotal      Decimal  @db.Decimal(18, 2)
+  liabilitiesTotal Decimal  @db.Decimal(18, 2)
+  totalNetWorth    Decimal  @db.Decimal(18, 2)
+  liquidNetWorth   Decimal  @db.Decimal(18, 2)
+  illiquidNetWorth Decimal  @db.Decimal(18, 2)
+}
+
+model BurnSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  month     DateTime
+  totalBurn Decimal  @db.Decimal(18, 2)
+  createdAt DateTime @default(now())
+}
+
+model PerformanceSnapshot {
+  id               String   @id @default(cuid())
+  userId           String
+  month            DateTime
+  contributed      Decimal  @db.Decimal(18, 2)
+  currentValue     Decimal  @db.Decimal(18, 2)
+  gainLoss         Decimal  @db.Decimal(18, 2)
+  returnPercentage Decimal  @db.Decimal(8, 4)
+}
+
+model SyncJob {
+  id            String   @id @default(cuid())
+  institutionId String
+  jobType       String
+  status        String
+  startedAt     DateTime @default(now())
+  finishedAt    DateTime?
+
+  institution ConnectedInstitution @relation(fields: [institutionId], references: [id])
+  logs        SyncLog[]
+}
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  syncJobId String
+  level     String
+  message   String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  syncJob SyncJob @relation(fields: [syncJobId], references: [id])
+}
+
+model ManualValuationEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  subjectId String
+  subjectType String
+  value     Decimal  @db.Decimal(18, 2)
+  valuedAt  DateTime
+  source    String
+  notes     String?
+  createdAt DateTime @default(now())
+}
