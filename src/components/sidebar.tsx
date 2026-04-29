@@ -9,7 +9,6 @@ import {
   Gauge,
   Landmark,
   LineChart,
-  Plug,
   Settings,
   Tags,
   WalletCards,
@@ -22,10 +21,8 @@ const navItems = [
   { href: "/burn", label: "Burn", icon: CircleDollarSign },
   { href: "/net-worth", label: "Net Worth", icon: Landmark },
   { href: "/rendement", label: "Rendement", icon: LineChart },
-  { href: "/entity-flow", label: "Entity Flow", icon: ArrowDownUp },
   { href: "/accounts", label: "Accounts", icon: WalletCards },
   { href: "/categories", label: "Categories", icon: Tags },
-  { href: "/connections", label: "Connections", icon: Plug },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -35,27 +32,25 @@ export function Sidebar() {
   return (
     <aside className="border-b border-white/10 bg-[#1a1a1a] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:w-28 lg:border-b-0">
       <div className="flex h-full flex-col items-center">
-        <div className="flex w-full flex-col items-center gap-2 px-3 py-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-[var(--accent)]">
-            <div className="h-8 w-8 rounded-full bg-white/95" />
+        <div className="flex w-full justify-center px-3 py-4">
+          <div className="h-10 w-10 rounded-[14px] bg-[var(--accent)] p-2 shadow-[0_8px_18px_rgba(253,94,45,0.28)]">
+            <div className="h-full w-full rounded-full bg-white/95" />
           </div>
-          <div className="text-center font-heading text-[11px] font-extrabold leading-3">Wealth Coach</div>
-          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold uppercase text-[var(--accent)]">
-            Draft
-          </span>
         </div>
 
         <nav className="flex w-full gap-2 overflow-x-auto px-2 py-3 lg:flex-1 lg:flex-col lg:items-center lg:overflow-visible">
-          <NavGroup label="Overview" />
+          <NavGroup label="Overview" tone="orange" />
           {navItems.slice(0, 2).map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} />
           ))}
-          <NavGroup label="Analytics" />
-          {navItems.slice(2, 7).map((item) => (
+          <Divider />
+          <NavGroup label="Analytics" tone="blue" />
+          {navItems.slice(2, 6).map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} />
           ))}
-          <NavGroup label="Setup" />
-          {navItems.slice(7).map((item) => (
+          <Divider />
+          <NavGroup label="Setup" tone="muted" />
+          {navItems.slice(6).map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} />
           ))}
         </nav>
@@ -72,8 +67,21 @@ export function Sidebar() {
   );
 }
 
-function NavGroup({ label }: { label: string }) {
-  return <div className="mt-2 hidden text-[9px] font-bold uppercase tracking-[0.12em] text-white/35 lg:block">{label}</div>;
+function NavGroup({ label, tone }: { label: string; tone: "orange" | "blue" | "muted" }) {
+  return (
+    <div className="mt-2 hidden w-full px-1 text-center lg:block">
+      <div
+        className={`mx-auto h-1 w-8 rounded-full ${
+          tone === "orange" ? "bg-[var(--accent)]" : tone === "blue" ? "bg-[#2d4d85]" : "bg-white/20"
+        }`}
+      />
+      <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em] text-white/40">{label}</div>
+    </div>
+  );
+}
+
+function Divider() {
+  return <div className="my-1 hidden h-px w-14 bg-white/10 lg:block" />;
 }
 
 function NavLink({

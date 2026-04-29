@@ -1,7 +1,8 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { entities } from "@/server/demo-data";
+import { formatCurrency } from "@/lib/formatters";
+import { connections, entities, getAccountName, getEntityName, transactions } from "@/server/demo-data";
 
 export default function SettingsPage() {
   return (
@@ -11,6 +12,55 @@ export default function SettingsPage() {
         description="Entity settings, valuation assumptions, property manual valuation, liquidity rules and dev diagnostics."
       />
       <div className="grid gap-4 xl:grid-cols-2">
+        <Panel title="Connections">
+          <div className="grid gap-3 md:grid-cols-2">
+            {connections.map((connection) => (
+              <div key={connection.id} className="rounded-[var(--radius-md)] border border-white/80 bg-white/45 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-bold">{connection.displayName}</div>
+                    <div className="mt-1 text-xs uppercase text-[var(--muted)]">{connection.provider}</div>
+                  </div>
+                  <StatusBadge
+                    tone={
+                      connection.status === "CONNECTED"
+                        ? "positive"
+                        : connection.status === "ERROR"
+                          ? "critical"
+                          : "warning"
+                    }
+                  >
+                    {connection.status}
+                  </StatusBadge>
+                </div>
+                <div className="mt-3 text-xs leading-5 text-[var(--muted)]">
+                  <div>{connection.syncHealth}</div>
+                  <div>{new Date(connection.lastSync).toLocaleString("nl-NL")}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+        <Panel title="Entity flow">
+          <div className="space-y-3">
+            {transactions
+              .filter((transaction) => transaction.isInternalTransfer)
+              .slice(0, 5)
+              .map((transaction) => (
+                <div key={transaction.id} className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3 text-sm last:border-0 last:pb-0">
+                  <div>
+                    <div className="font-semibold">{transaction.description}</div>
+                    <div className="text-xs text-[var(--muted)]">
+                      {getEntityName(transaction.entityId)} · {getAccountName(transaction.accountId)}
+                    </div>
+                  </div>
+                  <div className={`font-heading font-bold tabular ${transaction.amount < 0 ? "text-[var(--critical)]" : "text-[var(--success)]"}`}>
+                    {formatCurrency(transaction.amount)}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </Panel>
         <Panel title="Entities">
           <div className="space-y-3">
             {entities.map((entity) => (
