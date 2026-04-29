@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "bitvavo:check": "tsx scripts/check-bitvavo.ts",
+    "revolut:check": "tsx scripts/check-revolut.ts",
     "prisma:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts"
   },
