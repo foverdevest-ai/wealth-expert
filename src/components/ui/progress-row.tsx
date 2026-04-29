@@ -19,8 +19,8 @@ export function ProgressRow({
         <span>{label}</span>
         <span className="tabular">{formatCurrency(value)}</span>
       </div>
-      <div className="h-3 rounded-full border-2 border-[var(--ink)] bg-white">
-        <div className="h-full rounded-l-full" style={{ width: `${percentage}%`, background: color }} />
+      <div className="h-3 overflow-hidden rounded-full bg-white/70 shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)]">
+        <div className="h-full rounded-full" style={{ width: `${percentage}%`, background: color }} />
       </div>
     </div>
   );

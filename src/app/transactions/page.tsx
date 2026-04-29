@@ -20,9 +20,9 @@ export default function TransactionsPage() {
         }
       />
 
-      <Panel className="sticky top-0 z-10 mb-4 border-dashed shadow-none" title="">
+      <Panel className="sticky top-0 z-10 mb-4" title="">
         <div className="flex flex-wrap items-center gap-3 text-sm">
-          <div className="min-w-[320px] flex-1 rounded-[10px] border-2 border-[#aaa] bg-white px-4 py-3 text-[var(--muted)]">
+          <div className="min-w-[320px] flex-1 rounded-[var(--radius-md)] border border-[var(--color-gray-200)] bg-white/80 px-4 py-3 text-[var(--muted)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]">
             Search description, counterparty, IBAN...
           </div>
           <FilterPill value="Apr 2026" />
@@ -36,7 +36,7 @@ export default function TransactionsPage() {
         </div>
       </Panel>
 
-      <div className="mb-4 flex flex-wrap items-center gap-4 rounded-[10px] bg-[var(--ink)] px-4 py-3 text-white">
+      <div className="glass-panel mb-4 flex flex-wrap items-center gap-4 bg-[var(--navy)]/95 px-4 py-3 text-white">
         <span className="font-bold">3 selected</span>
         <ActionButton>Assign category</ActionButton>
         <ActionButton>Mark internal transfer</ActionButton>
@@ -49,7 +49,7 @@ export default function TransactionsPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b-2 border-[var(--ink)] bg-[#f3f0e8] text-xs uppercase text-[var(--muted)]">
+              <tr className="border-b border-[var(--color-gray-200)] bg-white/60 text-xs uppercase text-[var(--muted)]">
                 <th className="py-3 pl-4 pr-4"><input type="checkbox" aria-label="Select all transactions" /></th>
                 <th className="py-3 pr-4">Date</th>
                 <th className="py-3 pr-4">Account</th>
@@ -61,7 +61,7 @@ export default function TransactionsPage() {
             </thead>
             <tbody>
               {transactions.map((transaction, index) => (
-                <tr key={transaction.id} className={`border-b border-dashed border-[#aaa] hover:bg-[#fff7ee] ${transaction.categoryId === "cat-uncategorised" ? "border-l-4 border-l-[var(--accent)]" : ""}`}>
+                <tr key={transaction.id} className={`border-b border-[var(--color-gray-200)] transition hover:bg-white/70 ${transaction.categoryId === "cat-uncategorised" ? "border-l-4 border-l-[var(--accent)]" : ""}`}>
                   <td className="py-3 pl-4 pr-4">
                     <input type="checkbox" defaultChecked={index < 3} aria-label={`Select ${transaction.description}`} />
                   </td>
@@ -97,5 +97,5 @@ export default function TransactionsPage() {
 }
 
 function FilterPill({ value, active = false }: { value: string; active?: boolean }) {
-  return <span className={`pill-control px-4 py-2 font-bold ${active ? "bg-[#ffe7dc]" : ""}`}>{value}</span>;
+  return <span className={`pill-control px-4 py-2 font-bold ${active ? "bg-[var(--accent)] text-white" : ""}`}>{value}</span>;
 }

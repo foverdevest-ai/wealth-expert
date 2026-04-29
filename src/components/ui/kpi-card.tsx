@@ -12,11 +12,18 @@ export function KpiCard({
   tone?: "default" | "positive" | "warning" | "critical";
 }) {
   return (
-    <div className={cn("glass-panel p-5", tone === "positive" && "bg-[var(--accent)] text-white")}>
-      <div className={cn("text-xs font-bold uppercase tracking-[0.12em] text-[var(--muted)]", tone === "positive" && "text-white")}>{label}</div>
+    <div
+      className={cn(
+        "glass-panel relative overflow-hidden p-5",
+        tone === "positive" && "text-white",
+      )}
+      style={tone === "positive" ? { background: "var(--accent)" } : undefined}
+    >
+      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[var(--accent)]/10 blur-2xl" />
+      <div className={cn("relative text-xs font-bold uppercase tracking-[0.12em] text-[var(--muted)]", tone === "positive" && "text-white")}>{label}</div>
       <div
         className={cn(
-          "mt-2 font-heading text-3xl font-extrabold tabular",
+          "relative mt-2 font-heading text-3xl font-extrabold tabular",
           tone === "positive" && "text-white",
           tone === "warning" && "text-[#b7791f]",
           tone === "critical" && "text-[var(--critical)]",
@@ -24,7 +31,7 @@ export function KpiCard({
       >
         {value}
       </div>
-      {detail ? <div className={cn("mt-3 text-sm font-semibold text-[#333]", tone === "positive" && "text-white")}>{detail}</div> : null}
+      {detail ? <div className={cn("relative mt-3 text-sm font-semibold text-[#333]", tone === "positive" && "text-white")}>{detail}</div> : null}
     </div>
   );
 }

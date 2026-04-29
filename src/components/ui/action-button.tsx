@@ -10,10 +10,11 @@ export function ActionButton({
   return (
     <button
       className={cn(
-        "pill-control inline-flex items-center justify-center px-4 py-2 text-sm font-bold transition hover:-translate-y-0.5",
-        tone === "primary" && "bg-[var(--accent)] text-white",
-        tone === "dark" && "bg-[var(--ink)] text-white",
+        "pill-control inline-flex h-10 items-center justify-center px-4 py-2 text-sm font-bold transition hover:bg-white/95 active:scale-[0.98]",
+        tone === "primary" && "text-white",
+        tone === "dark" && "text-white",
       )}
+      style={tone === "primary" ? { background: "var(--accent)" } : tone === "dark" ? { background: "var(--navy)" } : undefined}
       type="button"
     >
       {children}

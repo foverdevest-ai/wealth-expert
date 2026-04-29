@@ -25,7 +25,7 @@ export default function NetWorthPage() {
           </div>
         }
       />
-      <Panel className="mb-5 border-dashed shadow-none" title="">
+      <Panel className="mb-5" title="">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold uppercase text-[var(--muted)]">Show:</span>

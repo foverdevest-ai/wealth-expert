@@ -33,33 +33,39 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="border-b-2 border-[var(--ink)] bg-[#fbfaf7] lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r-2">
-      <div className="flex h-full flex-col">
-        <div className="border-b-2 border-dashed border-[#989898] px-5 py-5">
-          <div className="flex items-center gap-3">
-            <div className="h-3.5 w-3.5 rounded-full border-2 border-[var(--ink)] bg-[var(--accent)]" />
-            <div>
-              <div className="font-heading text-xl font-extrabold">Wealth Coach</div>
-            </div>
-            <span className="rounded-sm border-2 border-[var(--accent)] px-2 py-1 text-xs font-bold uppercase text-[var(--accent)]">
-              Draft
-            </span>
+    <aside className="border-b border-white/10 bg-[#1a1a1a] text-white shadow-[0_4px_6px_rgba(0,0,0,0.1)] lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:w-28 lg:border-b-0">
+      <div className="flex h-full flex-col items-center">
+        <div className="flex w-full flex-col items-center gap-2 px-3 py-5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-[var(--accent)]">
+            <div className="h-8 w-8 rounded-full bg-white/95" />
           </div>
+          <div className="text-center font-heading text-[11px] font-extrabold leading-3">Wealth Coach</div>
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold uppercase text-[var(--accent)]">
+            Draft
+          </span>
         </div>
-        <nav className="flex gap-2 overflow-x-auto px-5 py-5 lg:flex-1 lg:flex-col lg:overflow-visible">
+
+        <nav className="flex w-full gap-2 overflow-x-auto px-2 py-3 lg:flex-1 lg:flex-col lg:items-center lg:overflow-visible">
           <NavGroup label="Overview" />
-          {navItems.slice(0, 2).map((item) => <NavLink key={item.href} item={item} pathname={pathname} />)}
+          {navItems.slice(0, 2).map((item) => (
+            <NavLink key={item.href} item={item} pathname={pathname} />
+          ))}
           <NavGroup label="Analytics" />
-          {navItems.slice(2, 7).map((item) => <NavLink key={item.href} item={item} pathname={pathname} />)}
+          {navItems.slice(2, 7).map((item) => (
+            <NavLink key={item.href} item={item} pathname={pathname} />
+          ))}
           <NavGroup label="Setup" />
-          {navItems.slice(7).map((item) => <NavLink key={item.href} item={item} pathname={pathname} />)}
+          {navItems.slice(7).map((item) => (
+            <NavLink key={item.href} item={item} pathname={pathname} />
+          ))}
         </nav>
-        <div className="hidden border-t-2 border-dashed border-[#989898] p-5 text-xs leading-6 text-[var(--muted)] lg:block">
-          <div className="flex items-center gap-2 font-semibold text-[#333]">
-            <span className="h-2.5 w-2.5 rounded-full border border-[var(--ink)] bg-[var(--success)]" />
-            All synced · 4 min ago
+
+        <div className="hidden w-full border-t border-white/10 p-3 text-center text-[10px] leading-5 text-white/60 lg:block">
+          <div className="flex items-center justify-center gap-1.5 font-semibold text-white/80">
+            <span className="h-2 w-2 rounded-full bg-[var(--success)]" />
+            Synced
           </div>
-          <div>Mark · Single user · V1</div>
+          <div>Mark · V1</div>
         </div>
       </div>
     </aside>
@@ -67,7 +73,7 @@ export function Sidebar() {
 }
 
 function NavGroup({ label }: { label: string }) {
-  return <div className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#989898]">{label}</div>;
+  return <div className="mt-2 hidden text-[9px] font-bold uppercase tracking-[0.12em] text-white/35 lg:block">{label}</div>;
 }
 
 function NavLink({
@@ -77,21 +83,22 @@ function NavLink({
   item: (typeof navItems)[number];
   pathname: string;
 }) {
+  const isActive = pathname === item.href;
+
   return (
     <Link
       href={item.href}
-      className={`flex min-w-fit items-center justify-between gap-3 rounded-[10px] border-2 px-3 py-2.5 text-sm font-bold transition ${
-        pathname === item.href
-          ? "border-[var(--ink)] bg-white shadow-[3px_4px_0_#171717]"
-          : "border-transparent text-[#222] hover:border-[var(--ink)] hover:bg-white"
+      className={`relative flex min-w-[76px] flex-col items-center justify-center gap-1 rounded-[14px] px-2 py-2 text-center text-[11px] font-bold transition lg:min-h-[76px] ${
+        isActive ? "bg-[#f2824b] text-white" : "text-white/60 hover:bg-white/8 hover:text-white"
       }`}
     >
-      <span className="flex items-center gap-3">
-        <item.icon size={17} aria-hidden="true" />
-        {item.label}
+      {isActive ? <span className="absolute left-[-8px] top-3 hidden h-12 w-1.5 rounded-r-lg bg-white lg:block" /> : null}
+      <span className={`flex h-11 w-11 items-center justify-center rounded-[12px] ${isActive ? "bg-[#f59e73]" : ""}`}>
+        <item.icon size={22} aria-hidden="true" />
       </span>
+      <span className="leading-3">{item.label}</span>
       {item.href === "/transactions" ? (
-        <span className="rounded-full border-2 border-[var(--ink)] bg-[var(--accent)] px-2 py-0.5 text-xs text-white">
+        <span className="absolute right-1 top-1 rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[9px] text-white shadow">
           47
         </span>
       ) : null}

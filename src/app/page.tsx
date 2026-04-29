@@ -94,8 +94,8 @@ function AttentionRow({
   tone: "critical" | "warning" | "neutral";
 }) {
   return (
-    <div className={`flex items-center justify-between gap-3 rounded-md border-2 border-[var(--ink)] p-3 ${
-      tone === "critical" ? "bg-[#ffe7dc]" : tone === "warning" ? "bg-[#fff7d8]" : "bg-white"
+    <div className={`flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-white/90 p-3 shadow-[0_1px_2px_rgba(0,0,0,0.05)] ${
+      tone === "critical" ? "bg-[#ffe7dc]/85" : tone === "warning" ? "bg-[#fff7ee]/90" : "bg-white/70"
     }`}>
       <span className="text-sm font-semibold">{label}</span>
       <StatusBadge>{action}</StatusBadge>

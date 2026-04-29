@@ -10,12 +10,12 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border-2 border-[var(--ink)] px-3 py-1 text-xs font-bold",
-        tone === "neutral" && "bg-white text-[#334139]",
-        tone === "positive" && "bg-[var(--accent-soft)] text-[var(--accent)]",
-        tone === "warning" && "bg-[#fff7ed] text-[#b7791f]",
-        tone === "critical" && "bg-[#fef2f2] text-[var(--critical)]",
-        tone === "info" && "bg-[#eff6ff] text-[#2563eb]",
+        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold shadow-[0_1px_2px_rgba(0,0,0,0.05)]",
+        tone === "neutral" && "border-[var(--color-gray-200)] bg-white/80 text-[#334139]",
+        tone === "positive" && "border-transparent bg-[var(--accent)] text-white",
+        tone === "warning" && "border-[#f2d0a8] bg-[#fff7ee] text-[#b7791f]",
+        tone === "critical" && "border-transparent bg-[var(--accent)] text-white",
+        tone === "info" && "border-transparent bg-[#d6e9ff] text-[#064e97]",
       )}
     >
       {children}

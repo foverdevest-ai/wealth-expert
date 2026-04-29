@@ -26,9 +26,9 @@ export default function CashflowPage() {
           </div>
         }
       />
-      <div className="mb-5 flex gap-4 border-b-2 border-[var(--ink)]">
+      <div className="mb-5 flex gap-4 border-b border-white/70">
         {["Trend", "By account", "By entity", "By category"].map((tab, index) => (
-          <span key={tab} className={`px-5 py-3 font-bold ${index === 0 ? "rounded-t-[10px] border-2 border-b-0 border-[var(--ink)] bg-white" : ""}`}>
+          <span key={tab} className={`px-5 py-3 font-bold ${index === 0 ? "rounded-t-[var(--radius-md)] bg-white/80 text-[var(--accent)] shadow-[0_1px_2px_rgba(0,0,0,0.05)]" : "text-[var(--muted)]"}`}>
             {tab}
           </span>
         ))}

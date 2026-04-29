@@ -17,7 +17,7 @@ export default function EntityFlowPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px] text-left text-sm">
             <thead className="text-xs uppercase text-[var(--muted)]">
-              <tr className="border-b-2 border-[var(--ink)] bg-[#f3f0e8]">
+              <tr className="border-b border-[var(--color-gray-200)] bg-white/60">
                 <th className="p-3">Date</th>
                 <th className="p-3">Entity</th>
                 <th className="p-3">Account</th>
@@ -28,7 +28,7 @@ export default function EntityFlowPage() {
             </thead>
             <tbody>
               {flows.map((transaction) => (
-                <tr key={transaction.id} className="border-b border-dashed border-[#aaa]">
+                <tr key={transaction.id} className="border-b border-[var(--color-gray-200)] transition hover:bg-white/70">
                   <td className="p-3 tabular">{transaction.date}</td>
                   <td className="p-3">{getEntityName(transaction.entityId)}</td>
                   <td className="p-3">{getAccountName(transaction.accountId)}</td>
