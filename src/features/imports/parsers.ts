@@ -10,7 +10,7 @@ type ParserInput = {
 
 export function parseImportFile(input: ParserInput): ImportParseResult {
   if (input.source === "REVOLUT") {
-    return parseRevolutCsv(input.buffer);
+    return isWorkbook(input.filename) ? parseRevolutWorkbook(input.buffer) : parseRevolutCsv(input.buffer);
   }
 
   if (input.source === "ABN_AMRO") {
@@ -22,7 +22,14 @@ export function parseImportFile(input: ParserInput): ImportParseResult {
 
 function parseRevolutCsv(buffer: Buffer): ImportParseResult {
   const text = buffer.toString("utf8");
-  const objects = rowsToObjects(parseCsv(text));
+  return parseRevolutRows(rowsToObjects(parseCsv(text)));
+}
+
+function parseRevolutWorkbook(buffer: Buffer): ImportParseResult {
+  return parseRevolutRows(readFirstSheet(buffer));
+}
+
+function parseRevolutRows(objects: Array<Record<string, unknown>>): ImportParseResult {
   const rows: ParsedImportRow[] = [];
   const errors: ImportParseError[] = [];
 
@@ -33,7 +40,9 @@ function parseRevolutCsv(buffer: Buffer): ImportParseResult {
         throw new Error("Amount is missing or invalid");
       }
 
-      const date = parseIsoDate(raw["Date completed (UTC)"] || raw["Date started (UTC)"]);
+      const date = parseIsoDate(
+        raw["Date completed (UTC)"] || raw["Date started (UTC)"] || raw["Date completed"] || raw["Date started"],
+      );
       const description = String(raw.Description || raw.Type || "Revolut transaction").trim();
       rows.push({
         rowIndex: index + 2,
@@ -162,6 +171,11 @@ function readFirstSheet(buffer: Buffer) {
     defval: "",
     raw: false,
   });
+}
+
+function isWorkbook(filename: string) {
+  const lower = filename.toLowerCase();
+  return lower.endsWith(".xls") || lower.endsWith(".xlsx");
 }
 
 function extractDutchDescriptionValue(description: string, label: string) {

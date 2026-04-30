@@ -53,7 +53,7 @@ function isAllowedFile(source: ImportSource, filename: string) {
   const extension = filename.toLowerCase().split(".").pop();
 
   if (source === "REVOLUT") {
-    return extension === "csv";
+    return extension === "csv" || extension === "xls" || extension === "xlsx";
   }
 
   return extension === "xls" || extension === "xlsx";

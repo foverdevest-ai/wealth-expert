@@ -26,6 +26,36 @@ describe("manual import parsers", () => {
     });
   });
 
+  it("parses Revolut XLSX exports", () => {
+    const buffer = workbookBuffer([
+      {
+        "Date completed": "2026-04-30",
+        ID: "rev-xlsx-1",
+        Type: "CARD_PAYMENT",
+        Description: "Notion Labs Inc",
+        Amount: "-18.00",
+        "Payment currency": "EUR",
+        Balance: "982.00",
+        Account: "EUR Main",
+      },
+    ]);
+
+    const result = parseImportFile({
+      source: "REVOLUT",
+      filename: "revolut.xlsx",
+      buffer,
+    });
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.rows[0]).toMatchObject({
+      externalTransactionId: "rev-xlsx-1",
+      date: "2026-04-30",
+      amount: -18,
+      direction: "OUTFLOW",
+      isInvestmentRelated: false,
+    });
+  });
+
   it("parses ABN XLS exports", () => {
     const buffer = workbookBuffer([
       {
