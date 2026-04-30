@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { prisma } from "@/server/prisma";
 import { hasFallbackDuplicate } from "@/features/imports/duplicate";
 import { parseImportFile } from "@/features/imports/parsers";
@@ -65,8 +65,8 @@ export async function previewImport(input: PreviewImportInput) {
           status: row.status,
           duplicateReason: row.duplicateReason,
           errorMessage: row.errorMessage,
-          raw: row.raw as Prisma.InputJsonValue,
-          normalized: (row.normalized ?? undefined) as Prisma.InputJsonValue | undefined,
+          raw: row.raw as InputJsonValue,
+          normalized: (row.normalized ?? undefined) as InputJsonValue | undefined,
         })),
       },
     },
@@ -191,7 +191,7 @@ async function findDuplicateReason(accountId: string, row: ParsedImportRow) {
     where: {
       accountId,
       date: new Date(`${row.date}T00:00:00.000Z`),
-      amount: new Prisma.Decimal(row.amount),
+      amount: row.amount,
     },
     select: {
       description: true,
