@@ -1,19 +1,17 @@
 import { NextResponse } from "next/server";
-import { listImports } from "@/features/imports/service";
-
-type ImportHistoryItem = Awaited<ReturnType<typeof listImports>>[number];
+import { listImports, type ImportHistoryRecord } from "@/features/imports/service";
 
 export async function GET() {
   try {
     const imports = await listImports();
 
     return NextResponse.json({
-      imports: imports.map((item: ImportHistoryItem) => ({
+      imports: imports.map((item: ImportHistoryRecord) => ({
         id: item.id,
         source: item.source,
         filename: item.filename,
         status: item.status,
-        accountName: item.account.name,
+        accountName: item.accountName,
         totalRows: item.totalRows,
         newRows: item.newRows,
         duplicateRows: item.duplicateRows,

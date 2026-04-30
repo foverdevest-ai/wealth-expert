@@ -11,6 +11,64 @@ type PreviewImportInput = {
   buffer: Buffer;
 };
 
+type StoredImportRow = {
+  id: string;
+  rowIndex: number;
+  status: string;
+  duplicateReason: string | null;
+  errorMessage: string | null;
+  normalized: unknown;
+  raw: unknown;
+};
+
+type ImportBatchWithRows = {
+  id: string;
+  source: string;
+  filename: string;
+  account: {
+    id: string;
+    name: string;
+  };
+  rows: StoredImportRow[];
+};
+
+type ConfirmImportBatch = {
+  id: string;
+  accountId: string;
+  filename: string;
+  duplicateRows: number;
+  errorRows: number;
+  account: {
+    entityId: string;
+  };
+  rows: Array<{
+    id: string;
+    status: string;
+    normalized: unknown;
+  }>;
+};
+
+type ImportHistoryBatch = {
+  id: string;
+  source: ImportSource;
+  filename: string;
+  status: string;
+  account: {
+    name: string;
+  };
+  totalRows: number;
+  newRows: number;
+  duplicateRows: number;
+  errorRows: number;
+  importedRows: number;
+  createdAt: Date;
+  confirmedAt: Date | null;
+};
+
+export type ImportHistoryRecord = Omit<ImportHistoryBatch, "account"> & {
+  accountName: string;
+};
+
 export async function previewImport(input: PreviewImportInput) {
   const account = await prisma.connectedAccount.findUnique({
     where: { id: input.accountId },
@@ -48,7 +106,7 @@ export async function previewImport(input: PreviewImportInput) {
   duplicateCheckedRows.sort((left, right) => left.rowIndex - right.rowIndex);
 
   const counts = countPreviewRows(duplicateCheckedRows);
-  const batch = await prisma.importBatch.create({
+  const batch = (await prisma.importBatch.create({
     data: {
       userId: user.id,
       accountId: account.id,
@@ -71,7 +129,7 @@ export async function previewImport(input: PreviewImportInput) {
       },
     },
     include: { rows: { orderBy: { rowIndex: "asc" } }, account: true },
-  });
+  })) as ImportBatchWithRows;
 
   return {
     batchId: batch.id,
@@ -82,7 +140,7 @@ export async function previewImport(input: PreviewImportInput) {
       name: batch.account.name,
     },
     counts,
-    rows: batch.rows.map((row) => ({
+    rows: batch.rows.map((row: StoredImportRow) => ({
       id: row.id,
       rowIndex: row.rowIndex,
       status: row.status,
@@ -95,10 +153,10 @@ export async function previewImport(input: PreviewImportInput) {
 }
 
 export async function confirmImport(batchId: string) {
-  const batch = await prisma.importBatch.findUnique({
+  const batch = (await prisma.importBatch.findUnique({
     where: { id: batchId },
     include: { account: true, rows: { orderBy: { rowIndex: "asc" } } },
-  });
+  })) as ConfirmImportBatch | null;
 
   if (!batch) {
     throw new Error("Import batch was not found");
@@ -158,8 +216,8 @@ export async function confirmImport(batchId: string) {
   };
 }
 
-export async function listImports() {
-  return prisma.importBatch.findMany({
+export async function listImports(): Promise<ImportHistoryRecord[]> {
+  const imports = (await prisma.importBatch.findMany({
     orderBy: { createdAt: "desc" },
     take: 10,
     include: {
@@ -169,7 +227,22 @@ export async function listImports() {
         },
       },
     },
-  });
+  })) as ImportHistoryBatch[];
+
+  return imports.map((item: ImportHistoryBatch) => ({
+    id: item.id,
+    source: item.source,
+    filename: item.filename,
+    status: item.status,
+    accountName: item.account.name,
+    totalRows: item.totalRows,
+    newRows: item.newRows,
+    duplicateRows: item.duplicateRows,
+    errorRows: item.errorRows,
+    importedRows: item.importedRows,
+    createdAt: item.createdAt,
+    confirmedAt: item.confirmedAt,
+  }));
 }
 
 async function findDuplicateReason(accountId: string, row: ParsedImportRow) {
