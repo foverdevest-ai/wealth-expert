@@ -50,7 +50,7 @@ type PlaidTransactionsSyncResponse = {
 
 const PLAID_BASE_URLS: Record<PlaidEnvironment, string> = {
   sandbox: "https://sandbox.plaid.com",
-  development: "https://development.plaid.com",
+  development: "https://production.plaid.com",
   production: "https://production.plaid.com",
 };
 
