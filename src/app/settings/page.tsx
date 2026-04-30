@@ -2,6 +2,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PlaidConnect } from "@/components/plaid-connect";
+import { OpenPaymentsConnect } from "@/components/open-payments-connect";
+import { RevolutConnect } from "@/components/revolut-connect";
 import { formatCurrency } from "@/lib/formatters";
 import { connections, entities, getAccountName, getEntityName, transactions } from "@/server/demo-data";
 
@@ -16,6 +18,8 @@ export default function SettingsPage() {
         <Panel title="Connections">
           <div className="grid gap-3 md:grid-cols-2">
             <PlaidConnect />
+            <OpenPaymentsConnect />
+            <RevolutConnect />
             {connections.map((connection) => (
               <div key={connection.id} className="rounded-[var(--radius-md)] border border-white/80 bg-white/45 p-4">
                 <div className="flex items-start justify-between gap-4">
@@ -53,7 +57,7 @@ export default function SettingsPage() {
                   <div>
                     <div className="font-semibold">{transaction.description}</div>
                     <div className="text-xs text-[var(--muted)]">
-                      {getEntityName(transaction.entityId)} · {getAccountName(transaction.accountId)}
+                      {getEntityName(transaction.entityId)} - {getAccountName(transaction.accountId)}
                     </div>
                   </div>
                   <div className={`font-heading font-bold tabular ${transaction.amount < 0 ? "text-[var(--critical)]" : "text-[var(--success)]"}`}>

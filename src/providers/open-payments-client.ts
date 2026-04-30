@@ -13,6 +13,7 @@ type OpenPaymentsClientOptions = {
   consentId?: string;
   bicFi?: string;
   psuIpAddress?: string;
+  redirectUri?: string;
   environment?: OpenPaymentsEnvironment;
 };
 
@@ -68,6 +69,42 @@ type OpenPaymentsTransaction = {
   };
 };
 
+type ConsentAccess = {
+  accounts: Array<{ iban: string; currency?: string }>;
+  balances: Array<{ iban: string; currency?: string }>;
+  transactions: Array<{ iban: string; currency?: string }>;
+};
+
+type ConsentResponse = {
+  consentId: string;
+  consentStatus: string;
+  scaMethods?: Array<{
+    authenticationType: string;
+    authenticationMethodId: string;
+  }>;
+  _links?: Record<string, { href: string }>;
+};
+
+type ConsentAuthorisationResponse = {
+  authorisationId: string;
+  scaMethods?: Array<{
+    authenticationType: string;
+    authenticationMethodId: string;
+  }>;
+  scaStatus: string;
+  _links?: Record<string, { href: string }>;
+};
+
+type ConsentMethodResponse = {
+  scaStatus: string;
+  psuMessage?: string;
+  _links?: {
+    scaOAuth?: {
+      href: string;
+    };
+  };
+};
+
 const HOSTS = {
   sandbox: {
     auth: "https://auth.sandbox.openbankingplatform.com",
@@ -88,6 +125,7 @@ export class OpenPaymentsClient {
   private readonly consentId: string;
   private readonly bicFi: string;
   private readonly psuIpAddress: string;
+  private readonly redirectUri: string;
   private accessToken = "";
 
   constructor(options: OpenPaymentsClientOptions = {}) {
@@ -100,6 +138,7 @@ export class OpenPaymentsClient {
     this.consentId = options.consentId ?? process.env.OPENPAYMENTS_CONSENT_ID ?? "";
     this.bicFi = options.bicFi ?? process.env.OPENPAYMENTS_BICFI ?? "";
     this.psuIpAddress = options.psuIpAddress ?? process.env.OPENPAYMENTS_PSU_IP_ADDRESS ?? "127.0.0.1";
+    this.redirectUri = options.redirectUri ?? process.env.OPENPAYMENTS_REDIRECT_URI ?? "http://localhost:3000/api/open-payments/callback";
   }
 
   get isConfigured() {
@@ -133,6 +172,88 @@ export class OpenPaymentsClient {
   async listAccounts() {
     const payload = await this.request<AccountsResponse>("/psd2/accountinformation/v1/accounts");
     return payload.accounts ?? [];
+  }
+
+  async createConsent(input: { iban: string; currency?: string; validUntil?: string; frequencyPerDay?: number }) {
+    const currency = input.currency ?? "EUR";
+    const access: ConsentAccess = {
+      accounts: [{ iban: input.iban, currency }],
+      balances: [{ iban: input.iban, currency }],
+      transactions: [{ iban: input.iban, currency }],
+    };
+
+    return this.request<ConsentResponse>("/psd2/consent/v1/consents", {
+      method: "POST",
+      body: JSON.stringify({
+        access,
+        recurringIndicator: true,
+        validUntil: input.validUntil ?? nextIsoDate(89),
+        frequencyPerDay: input.frequencyPerDay ?? 4,
+        combinedServiceIndicator: false,
+      }),
+      includeConsentId: false,
+    });
+  }
+
+  async startConsentAuthorisation(consentId: string) {
+    return this.request<ConsentAuthorisationResponse>(`/psd2/consent/v1/consents/${consentId}/authorisations`, {
+      method: "POST",
+      body: "",
+      includeConsentId: false,
+    });
+  }
+
+  async selectConsentAuthenticationMethod(input: {
+    consentId: string;
+    authorisationId: string;
+    authenticationMethodId: string;
+  }) {
+    const response = await this.request<ConsentMethodResponse>(
+      `/psd2/consent/v1/consents/${input.consentId}/authorisations/${input.authorisationId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ authenticationMethodId: input.authenticationMethodId }),
+        includeConsentId: false,
+      },
+    );
+
+    return {
+      ...response,
+      oauthUrl: response._links?.scaOAuth?.href
+        ? hydrateOauthUrl(response._links.scaOAuth.href, {
+            clientId: this.clientId,
+            scope: this.scope,
+            redirectUri: this.redirectUri,
+            state: crypto.randomUUID(),
+            bicFi: this.bicFi,
+            consentId: input.consentId,
+            authorisationId: input.authorisationId,
+          })
+        : undefined,
+    };
+  }
+
+  async exchangeConsentCode(input: { code: string; consentId: string; authorisationId: string }) {
+    const body = new URLSearchParams({
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      code: input.code,
+      redirect_uri: this.redirectUri,
+      scope: "accountinformation",
+      grant_type: "authorization_code",
+    });
+    const response = await fetch(`${this.authHost}/connect/token`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-ConsentAuthorisationId": input.authorisationId,
+        "X-ConsentId": input.consentId,
+      },
+      body,
+    });
+
+    return parseOpenPaymentsResponse<TokenResponse>(response);
   }
 
   async syncBalances(): Promise<NormalizedBalance[]> {
@@ -177,12 +298,16 @@ export class OpenPaymentsClient {
     return transactionGroups.flat();
   }
 
-  private async request<T>(path: string): Promise<T> {
+  private async request<T>(
+    path: string,
+    options: { method?: string; body?: string; includeConsentId?: boolean } = {},
+  ): Promise<T> {
     if (!this.accessToken) {
       await this.getAccessToken();
     }
 
     const response = await fetch(`${this.apiHost}${path}`, {
+      method: options.method ?? "GET",
       headers: {
         Authorization: `Bearer ${this.accessToken}`,
         accept: "application/json",
@@ -190,8 +315,9 @@ export class OpenPaymentsClient {
         "PSU-IP-Address": this.psuIpAddress,
         "X-BicFi": this.bicFi,
         "X-Request-ID": crypto.randomUUID(),
-        "Consent-ID": this.consentId,
+        ...((options.includeConsentId ?? true) ? { "Consent-ID": this.consentId } : {}),
       },
+      body: options.body,
     });
 
     return parseOpenPaymentsResponse<T>(response);
@@ -238,4 +364,31 @@ function parseEnvironment(value?: string): OpenPaymentsEnvironment {
 
 function toIsoDate(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+function nextIsoDate(daysFromNow: number) {
+  return toIsoDate(new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000));
+}
+
+function hydrateOauthUrl(
+  template: string,
+  values: {
+    clientId: string;
+    scope: string;
+    redirectUri: string;
+    state: string;
+    bicFi: string;
+    consentId: string;
+    authorisationId: string;
+  },
+) {
+  return template
+    .replace("[CLIENT_ID]", encodeURIComponent(values.clientId))
+    .replace("[TPP_REDIRECT_URI]", encodeURIComponent(values.redirectUri))
+    .replace("[TPP_STATE]", encodeURIComponent(values.state))
+    .replace("[BICFI]", encodeURIComponent(values.bicFi))
+    .replace("[CONSENT_ID]", encodeURIComponent(values.consentId))
+    .replace("[CONSENT_AUTH_ID]", encodeURIComponent(values.authorisationId))
+    .replace("accountinformation%20private", encodeURIComponent(values.scope))
+    .replace("accountinformation private", encodeURIComponent(values.scope));
 }
