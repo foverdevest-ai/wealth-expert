@@ -12,6 +12,7 @@
     "bitvavo:check": "tsx scripts/check-bitvavo.ts",
     "revolut:check": "tsx scripts/check-revolut.ts",
     "plaid:check:abn": "tsx scripts/check-plaid-abn.ts",
+    "openpayments:check": "tsx scripts/check-open-payments.ts",
     "prisma:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts"
   },
