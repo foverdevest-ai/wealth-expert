@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { PlaidConnect } from "@/components/plaid-connect";
 import { formatCurrency } from "@/lib/formatters";
 import { connections, entities, getAccountName, getEntityName, transactions } from "@/server/demo-data";
 
@@ -14,6 +15,7 @@ export default function SettingsPage() {
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel title="Connections">
           <div className="grid gap-3 md:grid-cols-2">
+            <PlaidConnect />
             {connections.map((connection) => (
               <div key={connection.id} className="rounded-[var(--radius-md)] border border-white/80 bg-white/45 p-4">
                 <div className="flex items-start justify-between gap-4">
