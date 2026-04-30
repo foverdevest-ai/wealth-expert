@@ -11,6 +11,8 @@
     "test:watch": "vitest",
     "bitvavo:check": "tsx scripts/check-bitvavo.ts",
     "revolut:check": "tsx scripts/check-revolut.ts",
+    "gocardless:check": "tsx scripts/check-gocardless.ts",
+    "gocardless:link": "tsx scripts/create-gocardless-link.ts",
     "prisma:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts"
   },

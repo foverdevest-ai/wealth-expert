@@ -20,7 +20,10 @@ export abstract class BaseProviderAdapter implements WealthProviderAdapter {
     return [];
   }
 
-  async syncTransactions(): Promise<Transaction[]> {
+  async syncTransactions(_connection?: ProviderConnectionState, _from?: Date, _to?: Date): Promise<Transaction[]> {
+    void _connection;
+    void _from;
+    void _to;
     return [];
   }
 
