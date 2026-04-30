@@ -15,6 +15,11 @@ async function main() {
   console.log("Open Payments token: OK");
   console.log(`Scope: ${token.scope ?? process.env.OPENPAYMENTS_SCOPE ?? "accountinformation corporate"}`);
 
+  if (!process.env.OPENPAYMENTS_CONSENT_ID || !process.env.OPENPAYMENTS_BICFI) {
+    console.log("AIS account check skipped: OPENPAYMENTS_CONSENT_ID and OPENPAYMENTS_BICFI are required after consent.");
+    return;
+  }
+
   const accounts = await client.listAccounts();
   console.log(`Accounts: ${accounts.length}`);
 

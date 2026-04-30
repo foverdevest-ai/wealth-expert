@@ -1,5 +1,6 @@
 import type { Transaction } from "@/domain/types";
 import type { NormalizedBalance } from "@/providers/types";
+import crypto from "node:crypto";
 
 type OpenPaymentsEnvironment = "sandbox" | "production";
 
@@ -9,6 +10,9 @@ type OpenPaymentsClientOptions = {
   scope?: string;
   authHost?: string;
   apiHost?: string;
+  consentId?: string;
+  bicFi?: string;
+  psuIpAddress?: string;
   environment?: OpenPaymentsEnvironment;
 };
 
@@ -81,6 +85,9 @@ export class OpenPaymentsClient {
   private readonly scope: string;
   private readonly authHost: string;
   private readonly apiHost: string;
+  private readonly consentId: string;
+  private readonly bicFi: string;
+  private readonly psuIpAddress: string;
   private accessToken = "";
 
   constructor(options: OpenPaymentsClientOptions = {}) {
@@ -90,6 +97,9 @@ export class OpenPaymentsClient {
     this.scope = options.scope ?? process.env.OPENPAYMENTS_SCOPE ?? "accountinformation corporate";
     this.authHost = options.authHost ?? process.env.OPENPAYMENTS_AUTH_HOST ?? HOSTS[environment].auth;
     this.apiHost = options.apiHost ?? process.env.OPENPAYMENTS_API_HOST ?? HOSTS[environment].api;
+    this.consentId = options.consentId ?? process.env.OPENPAYMENTS_CONSENT_ID ?? "";
+    this.bicFi = options.bicFi ?? process.env.OPENPAYMENTS_BICFI ?? "";
+    this.psuIpAddress = options.psuIpAddress ?? process.env.OPENPAYMENTS_PSU_IP_ADDRESS ?? "127.0.0.1";
   }
 
   get isConfigured() {
@@ -102,13 +112,15 @@ export class OpenPaymentsClient {
     }
 
     const body = new URLSearchParams({
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
       grant_type: "client_credentials",
       scope: this.scope,
     });
-    const response = await fetch(`${this.authHost}/oauth2/token`, {
+    const response = await fetch(`${this.authHost}/connect/token`, {
       method: "POST",
       headers: {
-        Authorization: `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString("base64")}`,
+        Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body,
@@ -174,6 +186,11 @@ export class OpenPaymentsClient {
       headers: {
         Authorization: `Bearer ${this.accessToken}`,
         accept: "application/json",
+        "Content-Type": "application/json",
+        "PSU-IP-Address": this.psuIpAddress,
+        "X-BicFi": this.bicFi,
+        "X-Request-ID": crypto.randomUUID(),
+        "Consent-ID": this.consentId,
       },
     });
 
