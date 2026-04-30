@@ -1,4 +1,7 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import fs from "node:fs";
+import path from "node:path";
 import {
   accounts,
   assetSnapshots,
@@ -9,10 +12,47 @@ import {
   transactions,
 } from "../src/server/demo-data";
 
-const prisma = new PrismaClient();
+loadDotEnv();
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString: process.env.DATABASE_URL,
+  }),
+});
+
+function loadDotEnv() {
+  const envPath = path.resolve(process.cwd(), ".env");
+
+  if (!fs.existsSync(envPath)) {
+    return;
+  }
+
+  for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const separatorIndex = trimmed.indexOf("=");
+
+    if (separatorIndex === -1) {
+      continue;
+    }
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const value = trimmed.slice(separatorIndex + 1).trim().replace(/^["']|["']$/g, "");
+
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+}
 
 async function main() {
   await prisma.transactionTagOnTransaction.deleteMany();
+  await prisma.importRow.deleteMany();
+  await prisma.importBatch.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.accountBalanceSnapshot.deleteMany();
   await prisma.investmentSnapshot.deleteMany();

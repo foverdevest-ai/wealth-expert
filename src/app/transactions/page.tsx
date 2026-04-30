@@ -2,20 +2,40 @@ import { ActionButton } from "@/components/ui/action-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { TransactionImporter } from "@/components/transaction-importer";
 import { formatCurrency } from "@/lib/formatters";
-import { getAccountName, getCategoryName, getEntityName, transactions } from "@/server/demo-data";
+import { getImportHistoryForTransactionsPage, getTransactionsPageData } from "@/server/transactions-data";
 
-export default function TransactionsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function TransactionsPage() {
+  const [{ transactions, accounts, source }, importHistory] = await Promise.all([
+    getTransactionsPageData(),
+    getImportHistoryForTransactionsPage(),
+  ]);
+  const uncategorisedCount = transactions.filter((transaction) => transaction.categoryName === "Uncategorised").length;
+  const serializedImportHistory = importHistory.map((item) => ({
+    id: item.id,
+    filename: item.filename,
+    source: item.source,
+    status: item.status,
+    importedRows: item.importedRows,
+    duplicateRows: item.duplicateRows,
+    errorRows: item.errorRows,
+    createdAt: item.createdAt.toISOString(),
+  }));
+
   return (
     <>
       <PageHeader
         title="Transactions"
-        description="Data. Account-aware transaction review with categorisation, internal transfer flags, investment flags and liquidity context."
+        description={`Data. ${source === "database" ? "Database-backed" : "Demo fallback"} transaction review with categorisation, internal transfer flags, investment flags and liquidity context.`}
         action={
           <div className="flex flex-wrap gap-3">
+            <TransactionImporter accounts={accounts} history={serializedImportHistory} />
             <ActionButton>Export CSV</ActionButton>
             <ActionButton>+ Manual transaction</ActionButton>
-            <ActionButton tone="primary">Review uncategorised (47)</ActionButton>
+            <ActionButton tone="primary">Review uncategorised ({uncategorisedCount})</ActionButton>
           </div>
         }
       />
@@ -61,19 +81,19 @@ export default function TransactionsPage() {
             </thead>
             <tbody>
               {transactions.map((transaction, index) => (
-                <tr key={transaction.id} className={`border-b border-[var(--color-gray-200)] transition hover:bg-white/70 ${transaction.categoryId === "cat-uncategorised" ? "border-l-4 border-l-[var(--accent)]" : ""}`}>
+                <tr key={transaction.id} className={`border-b border-[var(--color-gray-200)] transition hover:bg-white/70 ${transaction.categoryName === "Uncategorised" ? "border-l-4 border-l-[var(--accent)]" : ""}`}>
                   <td className="py-3 pl-4 pr-4">
                     <input type="checkbox" defaultChecked={index < 3} aria-label={`Select ${transaction.description}`} />
                   </td>
                   <td className="py-3 pr-4 font-semibold tabular">{transaction.date.slice(5)}</td>
-                  <td className="py-3 pr-4"><StatusBadge>{getAccountName(transaction.accountId).split(" ")[0]}</StatusBadge></td>
+                  <td className="py-3 pr-4"><StatusBadge>{transaction.accountName.split(" ")[0]}</StatusBadge></td>
                   <td className="py-3 pr-4">
                     <div className="font-heading font-bold uppercase">{transaction.description}</div>
-                    <div className="text-xs text-[var(--muted)]">{transaction.counterparty ?? "SEPA"} · {getEntityName(transaction.entityId)}</div>
+                    <div className="text-xs text-[var(--muted)]">{transaction.counterparty ?? "SEPA"} - {transaction.entityName}</div>
                   </td>
                   <td className="py-3 pr-4">
-                    <StatusBadge tone={transaction.categoryId === "cat-uncategorised" ? "critical" : "neutral"}>
-                      {getCategoryName(transaction.categoryId)}
+                    <StatusBadge tone={transaction.categoryName === "Uncategorised" ? "critical" : "neutral"}>
+                      {transaction.categoryName}
                     </StatusBadge>
                   </td>
                   <td className="py-3 pr-4">

@@ -49,6 +49,19 @@ enum SyncStatus {
   MANUAL
 }
 
+enum ImportBatchStatus {
+  PREVIEW
+  IMPORTED
+  FAILED
+}
+
+enum ImportRowStatus {
+  NEW
+  DUPLICATE
+  ERROR
+  IMPORTED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -61,6 +74,7 @@ model User {
   tags           TransactionTag[]
   transactionRules TransactionRule[]
   institutions   ConnectedInstitution[]
+  importBatches  ImportBatch[]
 }
 
 model Entity {
@@ -117,6 +131,7 @@ model ConnectedAccount {
   transactions Transaction[]
   investmentAccount InvestmentAccount?
   assets      Asset[]
+  importBatches ImportBatch[]
 }
 
 model AccountBalanceSnapshot {
@@ -152,6 +167,43 @@ model Transaction {
   entity   Entity              @relation(fields: [entityId], references: [id])
   category TransactionCategory @relation(fields: [categoryId], references: [id])
   tags     TransactionTagOnTransaction[]
+  importRow ImportRow?
+}
+
+model ImportBatch {
+  id              String            @id @default(cuid())
+  userId          String
+  accountId       String
+  source          AccountSourceType
+  filename        String
+  status          ImportBatchStatus @default(PREVIEW)
+  totalRows       Int               @default(0)
+  newRows         Int               @default(0)
+  duplicateRows   Int               @default(0)
+  errorRows       Int               @default(0)
+  importedRows    Int               @default(0)
+  createdAt       DateTime          @default(now())
+  confirmedAt     DateTime?
+
+  user    User             @relation(fields: [userId], references: [id])
+  account ConnectedAccount @relation(fields: [accountId], references: [id])
+  rows    ImportRow[]
+}
+
+model ImportRow {
+  id              String          @id @default(cuid())
+  batchId         String
+  transactionId   String?         @unique
+  rowIndex        Int
+  status          ImportRowStatus
+  duplicateReason String?
+  errorMessage    String?
+  raw             Json
+  normalized      Json?
+  createdAt       DateTime        @default(now())
+
+  batch       ImportBatch  @relation(fields: [batchId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
 }
 
 model TransactionCategory {
