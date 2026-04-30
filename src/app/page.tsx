@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   return (
     <>
       <PageHeader
-        title="Welcome back, Mark - here's where you stand"
+        title="Welcome back, Floor - here's where you stand"
         description="Overview. A consolidated founder finance cockpit across private, holding, UK LTD, crypto, broker and manually valued property layers."
         action={
           <div className="flex flex-wrap gap-3">
