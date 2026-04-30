@@ -1,27 +1,26 @@
 import fs from "node:fs";
 import path from "node:path";
-import { GoCardlessBankDataClient } from "../src/providers/gocardless-client";
+import { PlaidClient } from "../src/providers/plaid-client";
 
 loadDotEnv();
 
 async function main() {
-  const institutionId = process.env.GOCARDLESS_INSTITUTION_ID;
-  const redirectUrl = process.env.GOCARDLESS_REDIRECT_URI ?? "http://localhost:3000/settings";
+  const client = new PlaidClient();
 
-  if (!institutionId) {
-    throw new Error("Set GOCARDLESS_INSTITUTION_ID in .env first. Use npm run gocardless:check to find bank IDs.");
+  if (!client.isConfigured) {
+    throw new Error("Plaid is not configured. Add PLAID_CLIENT_ID and PLAID_SECRET to .env.");
   }
 
-  const client = new GoCardlessBankDataClient();
-  const requisition = await client.createRequisitionLink({
-    institutionId,
-    redirectUrl,
-    reference: `wealth-expert-${Date.now()}`,
-  });
+  const result = await client.searchInstitutions("ABN AMRO", ["NL"], ["transactions"]);
 
-  console.log("Consent link created:");
-  console.log(requisition.link);
-  console.log(`After completing it, add this to .env: GOCARDLESS_REQUISITION_ID=${requisition.id}`);
+  console.log("Plaid connection: OK");
+  console.log(`ABN AMRO matches with transactions in NL: ${result.institutions.length}`);
+
+  for (const institution of result.institutions) {
+    console.log(`${institution.name}: ${institution.institution_id}`);
+    console.log(`Products: ${institution.products.join(", ")}`);
+    console.log(`OAuth: ${institution.oauth ? "yes" : "no"}`);
+  }
 }
 
 function loadDotEnv() {
