@@ -21,7 +21,24 @@ export type TransactionDisplayRow = Transaction & {
   categoryName: string;
 };
 
-export async function getTransactionsPageData() {
+export type TransactionsPageData = {
+  transactions: TransactionDisplayRow[];
+  accounts: TransactionAccountOption[];
+  source: "database" | "demo";
+};
+
+export type ImportHistoryForPage = {
+  id: string;
+  filename: string;
+  source: AccountSourceType;
+  status: string;
+  importedRows: number;
+  duplicateRows: number;
+  errorRows: number;
+  createdAt: Date;
+};
+
+export async function getTransactionsPageData(): Promise<TransactionsPageData> {
   try {
     const [transactions, accounts] = await Promise.all([
       prisma.transaction.findMany({
@@ -95,13 +112,24 @@ export async function getTransactionsPageData() {
   };
 }
 
-export async function getImportHistoryForTransactionsPage() {
+export async function getImportHistoryForTransactionsPage(): Promise<ImportHistoryForPage[]> {
   try {
-    return await prisma.importBatch.findMany({
+    const batches = await prisma.importBatch.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { account: true },
     });
+
+    return batches.map((batch) => ({
+      id: batch.id,
+      filename: batch.filename,
+      source: batch.source,
+      status: batch.status,
+      importedRows: batch.importedRows,
+      duplicateRows: batch.duplicateRows,
+      errorRows: batch.errorRows,
+      createdAt: batch.createdAt,
+    }));
   } catch {
     return [];
   }
