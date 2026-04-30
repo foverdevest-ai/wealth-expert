@@ -8,8 +8,10 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { formatCurrency, formatNumber } from "@/lib/formatters";
 import { getDashboardMetrics } from "@/server/services/dashboard";
 
-export default function DashboardPage() {
-  const metrics = getDashboardMetrics();
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const metrics = await getDashboardMetrics();
 
   return (
     <>
@@ -19,7 +21,7 @@ export default function DashboardPage() {
         action={
           <div className="flex flex-wrap gap-3">
             <ActionButton>Live</ActionButton>
-            <ActionButton>Apr 2026</ActionButton>
+            <ActionButton>{metrics.currentMonthKey}</ActionButton>
             <ActionButton tone="primary">+ Manual valuation</ActionButton>
           </div>
         }
@@ -73,7 +75,7 @@ export default function DashboardPage() {
         </Panel>
         <Panel title="Needs attention">
           <div className="space-y-3">
-            <AttentionRow tone="critical" label={`${formatNumber(47)} uncategorised transactions`} action="Review" />
+            <AttentionRow tone="critical" label={`${formatNumber(metrics.uncategorisedCount)} uncategorised transactions`} action="Review" />
             <AttentionRow tone="warning" label="Property valuation last set 3 mo ago" action="Update" />
             <AttentionRow tone="warning" label="DEGIRO sync stale (38h)" action="Re-sync" />
             <AttentionRow tone="neutral" label="5 likely internal transfers unflagged" action="Confirm" />

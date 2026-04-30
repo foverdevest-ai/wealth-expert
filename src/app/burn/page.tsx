@@ -4,11 +4,15 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
-import { getAccountName, getCategoryName, getEntityName, transactions } from "@/server/demo-data";
+import { getFinancialAnalyticsData, getLatestTransactionMonth } from "@/server/financial-data";
 import { calculateBurn } from "@/server/services/burn";
 
-export default function BurnPage() {
-  const burn = calculateBurn(transactions, { currentMonth: "2026-04" });
+export const dynamic = "force-dynamic";
+
+export default async function BurnPage() {
+  const data = await getFinancialAnalyticsData();
+  const currentMonth = getLatestTransactionMonth(data.transactions);
+  const burn = calculateBurn(data.transactions, { currentMonth });
 
   return (
     <>
@@ -39,13 +43,13 @@ export default function BurnPage() {
         <TrendLineChart data={burn.monthlyTrend} lines={[{ key: "burn", name: "Burn", color: "#b42318" }]} />
       </Panel>
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
-        <BurnBreakdown title="Burn by category" rows={burn.byCategory.map((row) => ({ label: getCategoryName(row.key), burn: row.burn }))} />
-        <BurnBreakdown title="Burn by account" rows={burn.byAccount.map((row) => ({ label: getAccountName(row.key), burn: row.burn }))} />
-        <BurnBreakdown title="Burn by entity" rows={burn.byEntity.map((row) => ({ label: getEntityName(row.key), burn: row.burn }))} />
+        <BurnBreakdown title="Burn by category" rows={burn.byCategory.map((row) => ({ label: data.categoryNameById.get(row.key) ?? row.key, burn: row.burn }))} />
+        <BurnBreakdown title="Burn by account" rows={burn.byAccount.map((row) => ({ label: data.accountNameById.get(row.key) ?? row.key, burn: row.burn }))} />
+        <BurnBreakdown title="Burn by entity" rows={burn.byEntity.map((row) => ({ label: data.entityNameById.get(row.key) ?? row.key, burn: row.burn }))} />
       </div>
       <Panel title="Savings concentration" className="mt-4">
         <ComparisonBarChart
-          data={burn.byCategory.map((row) => ({ category: getCategoryName(row.key), burn: row.burn }))}
+          data={burn.byCategory.map((row) => ({ category: data.categoryNameById.get(row.key) ?? row.key, burn: row.burn }))}
           xKey="category"
           bars={[{ key: "burn", name: "Burn", color: "#b42318" }]}
         />

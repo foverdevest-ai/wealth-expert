@@ -4,14 +4,18 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/panel";
 import { formatCurrency } from "@/lib/formatters";
-import { getAccountName, getCategoryName, getEntityName, transactions } from "@/server/demo-data";
+import { getFinancialAnalyticsData } from "@/server/financial-data";
 import { calculateCashflow, groupCashflowByDimension } from "@/server/services/cashflow";
 
-export default function CashflowPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CashflowPage() {
+  const data = await getFinancialAnalyticsData();
+  const transactions = data.transactions;
   const cashflow = calculateCashflow(transactions, { granularity: "month", includeInternalTransfers: false });
-  const byAccount = groupCashflowByDimension(transactions, (transaction) => getAccountName(transaction.accountId));
-  const byEntity = groupCashflowByDimension(transactions, (transaction) => getEntityName(transaction.entityId));
-  const byCategory = groupCashflowByDimension(transactions, (transaction) => getCategoryName(transaction.categoryId));
+  const byAccount = groupCashflowByDimension(transactions, (transaction) => data.accountNameById.get(transaction.accountId) ?? transaction.accountId);
+  const byEntity = groupCashflowByDimension(transactions, (transaction) => data.entityNameById.get(transaction.entityId) ?? transaction.entityId);
+  const byCategory = groupCashflowByDimension(transactions, (transaction) => data.categoryNameById.get(transaction.categoryId) ?? transaction.categoryId);
 
   return (
     <>
