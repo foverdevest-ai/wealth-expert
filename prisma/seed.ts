@@ -14,9 +14,13 @@ import {
 
 loadDotEnv();
 
+const databaseUrl = normalizeDatabaseUrl(process.env.DATABASE_URL || process.env.POSTGRES_PRISMA_URL);
+const ssl = databaseUrl?.includes("supabase.com") ? { rejectUnauthorized: false } : undefined;
+
 const prisma = new PrismaClient({
   adapter: new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl,
+    ssl,
   }),
 });
 
@@ -47,6 +51,14 @@ function loadDotEnv() {
       process.env[key] = value;
     }
   }
+}
+
+function normalizeDatabaseUrl(url: string | undefined) {
+  if (!url || !url.includes("supabase.com")) {
+    return url;
+  }
+
+  return url.replace("sslmode=require", "sslmode=no-verify");
 }
 
 async function main() {

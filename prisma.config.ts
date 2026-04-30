@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 loadDotEnv();
+ensureDatabaseUrl();
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -13,6 +14,15 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
 });
+
+function ensureDatabaseUrl() {
+  if (process.env.DATABASE_URL) {
+    return;
+  }
+
+  process.env.DATABASE_URL =
+    process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL_NON_POOLING || "";
+}
 
 function loadDotEnv() {
   const envPath = path.resolve(process.cwd(), ".env");
