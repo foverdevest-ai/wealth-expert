@@ -13,6 +13,7 @@
     "revolut:check": "tsx scripts/check-revolut.ts",
     "plaid:check:abn": "tsx scripts/check-plaid-abn.ts",
     "openpayments:check": "tsx scripts/check-open-payments.ts",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
